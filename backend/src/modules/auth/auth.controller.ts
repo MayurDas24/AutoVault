@@ -7,7 +7,8 @@ export function createRegisterController(service: ReturnType<typeof createAuthSe
   return async (request, response) => {
     response.set('Cache-Control', 'no-store');
     // Checking the header also handles an empty JSON request, which has no parsed body.
-    if (!request.get('content-type')?.split(';')[0]?.trim().toLowerCase().match(/^application\/json$/)) {
+    const mediaType = request.get('content-type')?.split(';')[0]?.trim().toLowerCase();
+    if (mediaType !== 'application/json') {
       throw new AppError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Content-Type must be application/json');
     }
     const input = registrationSchema.parse(request.body);
