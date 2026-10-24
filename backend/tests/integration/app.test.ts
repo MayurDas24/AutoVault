@@ -57,6 +57,7 @@ describe('environment validation', () => {
     { DATABASE_URL: '' },
     { DATABASE_URL: 'file:./database.db' },
     { JWT_SECRET: 'short' },
+    { JWT_SECRET: 'replace-with-a-random-secret-of-at-least-32-characters' },
     { PORT: 'not-a-port' },
     { PORT: '65536' },
     { NODE_ENV: 'invalid' },

@@ -149,6 +149,34 @@ describe('POST /api/auth/register', { concurrent: false }, () => {
     });
   });
 
+  it('rejects an unsupported JSON charset as a client error', async () => {
+    await withTestApp(async ({ app }) => {
+      const response = await request(app).post(endpoint)
+        .set('Content-Type', 'application/json; charset=iso-8859-1').send('{}');
+      expect(response.status).toBe(415);
+      expect(response.body.error.code).toBe('UNSUPPORTED_MEDIA_TYPE');
+    });
+  });
+
+  it('rejects an unsupported content encoding as a client error', async () => {
+    await withTestApp(async ({ app }) => {
+      const response = await request(app).post(endpoint)
+        .set('Content-Type', 'application/json').set('Content-Encoding', 'unsupported').send('{}');
+      expect(response.status).toBe(415);
+      expect(response.body.error.code).toBe('UNSUPPORTED_MEDIA_TYPE');
+    });
+  });
+
+  it('rejects a corrupt gzip body as a client error', async () => {
+    await withTestApp(async ({ app }) => {
+      const response = await request(app).post(endpoint)
+        .set('Content-Type', 'application/json').set('Content-Encoding', 'gzip')
+        .send('invalid compressed bytes');
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe('INVALID_JSON');
+    });
+  });
+
   it('rejects JSON over the body limit', async () => {
     await withTestApp(async ({ app }) => {
       const response = await request(app).post(endpoint).send({ ...registration(), name: 'a'.repeat(17000) });
