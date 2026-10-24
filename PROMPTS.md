@@ -1,3 +1,26 @@
+# AI-assisted development notes and prompts
+
+This file explains how AI assistance was used while building AutoVault and points to the source conversation records. The aim is to make the development process easy to follow without presenting AI output as work that was never reviewed or tested.
+
+## How the work was approached
+
+The project was built in small steps rather than generating the whole application in one go:
+
+1. **Inspect the existing project** — check the repository, database configuration, Prisma schema, migrations and package scripts before changing anything.
+2. **Set up the backend and tests** — establish the Express app, environment validation, error handling and test infrastructure.
+3. **Build authentication** — add registration and login, validate input, hash passwords and test the expected success and failure cases.
+4. **Add protected inventory APIs** — introduce authenticated vehicle routes, role-based admin actions and purchase/stock behaviour.
+5. **Build the frontend** — add sign-in and registration screens, protected navigation, the dashboard, inventory pages and administration screens.
+6. **Verify and refine** — run tests, type checks, linting and production builds; use the resulting errors to guide fixes; then verify the app locally.
+
+The guiding prompt was to work against the existing repository and assignment, preserve the local database, make changes in reviewable milestones, follow a test-first workflow where practical, and report only results that had actually been observed. The original prompt and the available session messages are preserved in the JSONL record linked below.
+
+## Source conversation record
+
+The available Codex session export is stored in [docs/ai-conversation.jsonl](docs/ai-conversation.jsonl). The export is a snapshot of one session, not a complete record of every conversation or every later frontend change. It has not been expanded with invented dialogue.
+
+The raw record is retained below as originally exported.
+
 # Raw AI conversation records
 
 Source: the local Codex session export for chat `01a16c95-3048-7102-b446-22ec8c0b4db0`. The JSONL records below are copied byte-for-byte from its completed user and assistant message records, in order. Tool events, internal reasoning, and system/developer context are excluded. This is a snapshot of this session only; earlier conversations and messages after the snapshot are not included. No dialogue has been reconstructed or summarized.
