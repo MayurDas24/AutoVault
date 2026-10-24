@@ -67,6 +67,26 @@ SHA-256 comparisons confirm that the working `backend/.env`, Prisma schema, init
 
 Implementation references: [Express 5 async error handling](https://expressjs.com/en/5x/guide/error-handling/), [Prisma 6 rollback semantics](https://www.prisma.io/docs/orm/v6/prisma-client/queries/transactions), and [bcrypt's UTF-8 byte limit](https://www.npmjs.com/package/bcrypt).
 
-## Remaining work
+## Current application status
 
-Next milestone: JWT login, invalid-credential/token failure tests, authentication middleware and request-rate limiting. Then implement role authorization, vehicles and atomic inventory operations with competing-transaction tests. Frontend strict mode, Tailwind integration, functionality/tests, final screenshots, the author's personal AI reflection, and final assignment verification remain pending. Five empty future-feature test files remain explicitly excluded; they are not tested features. The frontend test command and dependency audit are the unresolved verification failures noted above. Nothing has been deployed or published.
+After the earlier backend-focused verification recorded above, the project has continued through authentication, vehicle inventory APIs and the React frontend. The repository now includes the dashboard, inventory views, vehicle details, account screens and administration UI.
+
+Latest local verification reported by the developer:
+
+- Backend health endpoint: `GET http://127.0.0.1:5000/health` returned `{ "status": "ok" }`.
+- Frontend: Vite started and the dashboard loaded in the browser.
+- Manual workflows: the developer reports that the inventory CRUD operations are working.
+- Local browser integration initially exposed a CORS origin mismatch on port `5174`; the local CORS allow-list was adjusted to include the Vite development origins, after which the developer confirmed the application was working.
+
+These are the latest reported manual checks, not a replacement for the command-level results listed earlier in this document. The earlier automated test counts belong to the earlier backend milestone and should not be presented as the current full-stack test count. Re-run the package scripts before final submission and replace or supplement this report with the actual current output.
+
+## Remaining work before submission
+
+- Re-run backend and frontend tests, type checks, linting and production builds on the final checkout, then record their exact results.
+- Review authorization tests for both allowed and forbidden user actions.
+- Check the current dependency audit and record any unresolved findings without applying an unreviewed major-version upgrade.
+- Add screenshots of the working dashboard, inventory and administration flows if the assignment submission benefits from visual evidence.
+- Add the developer's own short reflection on what was learned and what could be improved.
+- Review environment configuration and confirm no real credentials, passwords or tokens are committed.
+
+Do not use `prisma migrate reset` or `docker compose down -v` against a database that contains data you want to keep. The application has not been described here as deployed to production.
