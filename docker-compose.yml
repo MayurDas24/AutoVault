@@ -1,0 +1,22 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: incubyte-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: incubyte_user
+      POSTGRES_PASSWORD: local_dev_password
+      POSTGRES_DB: incubyte_dealership
+    ports:
+      - "5433:5432"
+    volumes:
+      - incubyte_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incubyte_user -d incubyte_dealership"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  incubyte_postgres_data:
