@@ -1,52 +1,195 @@
-# Incubyte Car Dealership Inventory System
+# AutoVault — Car Dealership Inventory System
 
-A TDD implementation of the supplied car dealership assignment. Work is deliberately split into small milestones. The frontend is still the original React/Vite starter; vehicles, JWT login, authorization and inventory are not implemented yet.
+AutoVault is a full-stack inventory management app for a car dealership. It brings vehicle stock, pricing, purchases and basic administration into one place, with a dashboard for a quick view of the current inventory.
 
-## Stack and local setup
+This project was built in small milestones, with a focus on keeping the backend structured, validating requests, and checking behaviour with automated tests as the features were added.
 
-- Backend: Node.js, strict TypeScript, Express 5, PostgreSQL 16, Prisma 6, Zod and bcrypt. JWT login is the next milestone.
-- Testing: Vitest and Supertest, including real PostgreSQL integration tests.
-- Frontend: React, TypeScript and Vite. Tailwind is installed but not connected yet.
+## What it can do
 
-Use Node.js 24 and npm. Install each package separately (`npm ci` inside `backend` and `frontend`). The backend compiler is TypeScript 6.0, matching the frontend's version line and the supported range of TypeScript ESLint.
+- **Dashboard:** View total vehicle count, inventory value, low-stock and out-of-stock counts, and recently added vehicles.
+- **Inventory:** Browse the catalogue, search vehicles, and open an individual vehicle's details.
+- **Purchases and stock:** Purchase an available vehicle and reflect the change in stock.
+- **Administration:** Add, edit, restock and remove vehicles through admin-only operations.
+- **Accounts and access:** Register and sign in, use token-based authentication, and restrict administration features to users with the appropriate role.
+- **API safeguards:** Validate incoming data, return structured errors, and apply standard security middleware.
 
-The existing Docker Compose service exposes PostgreSQL at `localhost:5433`, with the named `incubyte_postgres_data` volume. Keep an existing `backend/.env` intact. For a new checkout only, copy `backend/.env.example` to `backend/.env` and replace the JWT secret with a random value of at least 32 characters. Generate one using `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Compose credentials are for local development only.
+The dashboard values are calculated from the inventory stored by the backend; they are not hard-coded demo statistics.
 
-From the repository root, `docker compose up -d postgres` starts the existing database service without deleting its volume. Inside `backend`:
+## Tech stack
 
-```sh
+| Area | Tools |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Routing and data fetching | React Router, TanStack Query |
+| Backend | Node.js, TypeScript, Express 5 |
+| Database | PostgreSQL 16, Prisma 6 |
+| Validation and security | Zod, bcrypt, JWT, Helmet, CORS |
+| Testing | Vitest, Supertest, Testing Library |
+
+## Project layout
+
+```text
+.
+├── backend/       # Express API, Prisma schema and migrations, backend tests
+├── frontend/      # React application and frontend tests
+├── docs/          # Test notes and available AI conversation records
+├── docker-compose.yml
+├── PROMPTS.md     # AI-assisted development notes and source-record links
+└── README.md
+```
+
+## Run it locally
+
+### Prerequisites
+
+- Node.js 24 and npm
+- Docker Desktop (or a local PostgreSQL instance compatible with the configured connection string)
+
+### 1. Install dependencies
+
+From the repository root:
+
+```powershell
+cd backend
+npm ci
+cd ..\frontend
+npm ci
+cd ..
+```
+
+### 2. Configure environment variables
+
+Create local environment files from the examples if they do not already exist. Keep your existing local configuration if it is already working.
+
+PowerShell:
+
+```powershell
+Copy-Item backend\.env.example backend\.env
+Copy-Item frontend\.env.example frontend\.env.local
+```
+
+Set a private JWT secret in `backend/.env` (at least 32 characters). You can generate a random value with:
+
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+Check that `DATABASE_URL` matches your local PostgreSQL setup. The supplied Docker Compose configuration exposes PostgreSQL on port `5433`. Do not commit `.env` or `.env.local` files, and do not reuse the example credentials in a deployed environment.
+
+The frontend API base URL is configured through `VITE_API_URL`, normally:
+
+```env
+VITE_API_URL=http://127.0.0.1:5000
+```
+
+The backend uses `FRONTEND_URL` for the configured frontend origin. During local development, Vite may choose port `5174` if `5173` is already in use. Make sure the backend CORS configuration allows the origin printed by Vite.
+
+### 3. Start the database
+
+From the repository root:
+
+```powershell
+docker compose up -d postgres
+docker compose ps
+```
+
+This starts the PostgreSQL service without removing its data volume. Avoid `docker compose down -v` and `prisma migrate reset` unless you intentionally want to destroy local database data.
+
+### 4. Prepare and start the backend
+
+In a terminal:
+
+```powershell
+cd backend
 npx prisma generate
 npx prisma validate
 npx prisma migrate status
-# For a new database or pending committed migrations only:
-npx prisma migrate deploy
 npm run dev
 ```
 
-The API binds to `http://127.0.0.1:5000` by default. `GET /health` is a process health check, not a database readiness check. `FRONTEND_URL` controls the browser origin allowed by CORS. The app factory has no network listener; `server.ts` owns startup and shutdown.
+If this is a new database and committed migrations are pending, review the migration status and then apply them with `npx prisma migrate deploy`. Do not reset the database to fix a migration issue.
 
-Inside `frontend`, `npm run dev` starts the existing Vite starter. It is not yet a dealership interface. Production commands are `npm run build` in each package, followed by `npm start` in `backend` or `npm run preview` in `frontend`.
+By default, the API listens at `http://127.0.0.1:5000`. You can check that the server is responding at:
 
-## Registration API
+```text
+GET http://127.0.0.1:5000/health
+```
 
-`POST /api/auth/register` accepts an `application/json` object with `name`, `email`, and `password`. The name is trimmed (1–100 characters); email is trimmed, lowercased and validated (at most 254 characters). Passwords require at least 12 characters and at most 72 UTF-8 bytes, with no NUL characters; whitespace is preserved. Additional fields, including `role`, are rejected.
+A successful response is:
 
-A successful request returns HTTP 201 and `{ "user": { "id": "...", "name": "...", "email": "...", "role": "USER" } }`. Passwords are hashed with bcrypt cost 12 and never returned. Duplicate normalized email returns 409. Other documented statuses are 400 for invalid input, 413 for oversized JSON, 415 for unsupported content, and a sanitized 500 for unexpected failures. Errors use `{ "error": { "code": "...", "message": "..." } }`. This endpoint does not issue a login token yet.
+```json
+{ "status": "ok" }
+```
 
-New registrations normalize email before the database unique constraint is applied. Existing mixed-case records, if introduced externally, are not migrated or rewritten. Cross-transaction concurrency tests and request-rate limiting are pending; the current tests verify unique-constraint error handling, not parallel transactions. Complete the next authentication milestone before treating this as a deployable service.
+This endpoint confirms the API process is responding; it is not a full database-readiness check.
 
-## Verification
+### 5. Start the frontend
 
-Inside `backend`, run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. The build emits application code to `dist/src` without compiling test code into production output. Integration tests require the configured PostgreSQL service; each database test runs in a transaction that is always rolled back. There are no truncates, migration resets, or deletes of existing records.
+Open another terminal:
 
-The Vitest configuration explicitly excludes empty future-feature test scaffolds. These are unfinished work, not passing tests. Remove the corresponding exclusion when implementing each scaffold. Frontend test infrastructure and tests remain a later milestone; its current `npm test` exits with code 1 because there are no tests.
+```powershell
+cd frontend
+npm run dev
+```
 
-See [the executed test report](docs/test-report.md) for Red/Green results, command failures and remaining limitations. Do not use `prisma migrate reset` or `docker compose down -v` against the existing development setup.
+Open the local URL printed by Vite (often `http://localhost:5173`, or `http://localhost:5174` if the default port is busy).
 
-## My AI Usage
+## API overview
 
-Codex was used to inspect the repository and assignment, identify incomplete configuration, write tests before implementation, implement Express startup, centralized error handling and registration, and run the checks recorded in the test report. A parallel Codex agent independently reviewed database test isolation, contributed registration tests, and reviewed the implementation. AI contributions are identified in Git commit trailers.
+All vehicle routes require a valid authenticated session/token. Administrative changes require an administrator role.
 
-Observed workflow impact: the first test runs exposed empty scaffolds; package installation exposed an incompatible TypeScript/linter version combination; strict error-type assertions caught an incorrect URL validator before the infrastructure milestone was accepted. This is a factual contribution record written by Codex, not a claim of manual author review or the author's personal reflection. The author should add their own reflection before final submission.
+| Method | Endpoint | Purpose | Access |
+| --- | --- | --- | --- |
+| POST | `/api/auth/register` | Create an account | Public |
+| POST | `/api/auth/login` | Sign in and receive authentication | Public |
+| GET | `/api/auth/me` | Get the current authenticated user | Authenticated |
+| GET | `/api/vehicles` | List vehicles | Authenticated |
+| GET | `/api/vehicles/search` | Search/filter vehicles | Authenticated |
+| GET | `/api/vehicles/:id` | Get vehicle details | Authenticated |
+| POST | `/api/vehicles/:id/purchase` | Purchase a vehicle and update stock | Authenticated |
+| POST | `/api/vehicles` | Create a vehicle | Administrator |
+| PUT | `/api/vehicles/:id` | Update a vehicle | Administrator |
+| POST | `/api/vehicles/:id/restock` | Restock a vehicle | Administrator |
+| DELETE | `/api/vehicles/:id` | Remove a vehicle | Administrator |
+| GET | `/health` | Check API process health | Public |
 
-[PROMPTS.md](PROMPTS.md) links to actual exported conversation records, not reconstructed transcripts. Earlier AI conversations, if any, have not been supplied and are not invented. Final application screenshots and deployment/public repository links are pending. Nothing is published or deployed by this milestone.
+The API returns structured error responses for invalid requests and failed operations. For exact request fields and response shapes, use the route/controller validation in `backend/src/modules` as the source of truth.
+
+## Tests and quality checks
+
+Run the backend checks from `backend`:
+
+```powershell
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Run the frontend checks from `frontend`:
+
+```powershell
+npm test
+npm run lint
+npm run build
+```
+
+The frontend build runs TypeScript project checks before creating the production bundle. Backend integration tests use the configured PostgreSQL database, so make sure the database is running and `DATABASE_URL` is correct.
+
+See [docs/test-report.md](docs/test-report.md) for the recorded test-driven development history and verification notes. That report includes earlier milestone results; rerun the commands above to verify the current checkout after making changes.
+
+## AI-assisted development
+
+AI tools were used as development assistants for repository inspection, planning small milestones, drafting tests and implementation changes, debugging failures, and improving documentation. The project was still checked locally as it was built; a generated suggestion was not treated as proof that a feature or test worked.
+
+The original conversation export is linked from [PROMPTS.md](PROMPTS.md) and stored in [docs/ai-conversation.jsonl](docs/ai-conversation.jsonl). These records represent the available export, not every conversation that may have happened. No missing conversations or personal reflections are invented here.
+
+Before submitting, add a short reflection in your own words about what you learned, what you changed after testing, and what you would improve next. Make sure the final test report matches the results from your current machine.
+
+## Current scope and possible next improvements
+
+The app supports the main local dealership workflows described above. Before using it with real customer or business data, review deployment configuration, rotate all development secrets, configure trusted production origins, and perform a separate security review. Additional improvements could include rate limiting, stronger concurrent-purchase tests, CI automation, and deployment documentation if these are required by the assignment.
+
+---
+
+Built as the Incubyte Car Dealership Inventory System assignment.
