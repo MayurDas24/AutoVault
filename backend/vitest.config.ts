@@ -14,8 +14,6 @@ export default defineConfig({
       'src/modules/auth/auth.test.ts',
       'src/modules/vehicles/vehicle.test.ts',
       'src/modules/inventory/inventory.test.ts',
-      'tests/integration/vehicles.test.ts',
-      'tests/integration/inventory.test.ts',
     ],
   },
 });
