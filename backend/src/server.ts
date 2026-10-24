@@ -9,8 +9,8 @@ async function startServer() {
   const env = parseEnvironment(process.env);
   await database.$connect();
   const app = createApp({ frontendUrl: env.FRONTEND_URL });
-const server = app.listen(env.PORT, '0.0.0.0');
-server.on('listening', () => console.info(`API listening on port ${env.PORT}`));
+  const server = app.listen(env.PORT, '0.0.0.0');
+  server.on('listening', () => console.info(`API listening on port ${env.PORT}`));
   server.on('error', () => {
     console.error('Unable to start HTTP server. Check the configured port.');
     void database.$disconnect().finally(() => { process.exitCode = 1; });
