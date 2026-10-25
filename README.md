@@ -26,6 +26,26 @@ The dashboard values are calculated from the inventory stored by the backend; th
 | Validation and security | Zod, bcrypt, JWT, Helmet, CORS |
 | Testing | Vitest, Supertest, Testing Library |
 
+## Production deployment
+
+AutoVault has been deployed as a first production-hosted version, with the frontend and API hosted separately:
+
+| Component | Hosting | URL |
+| --- | --- | --- |
+| Frontend | Vercel | [auto-vault-weld.vercel.app](https://auto-vault-weld.vercel.app) |
+| Backend API | Render | [autovault-api-4v1d.onrender.com](https://autovault-api-4v1d.onrender.com) |
+| API health endpoint | Render | [`/health`](https://autovault-api-4v1d.onrender.com/health) |
+
+The frontend is available online and the Render deployment logs show the API starting successfully. End-to-end production login and API connectivity are still being verified, so the hosted links should be treated as a deployment preview rather than a fully verified production service. In particular, the frontend's `VITE_API_URL` must point to the exact Render service URL above, and the backend's production CORS configuration must allow the deployed Vercel origin.
+
+The Render free instance may spin down when idle, which can make the first request noticeably slower while it starts. A successful `/health` response confirms that the API process responds; it does not by itself prove that database-backed login and inventory operations are working.
+
+For a repeatable deployment, configure environment variables in the hosting dashboards rather than committing secrets:
+- **Frontend:** `VITE_API_URL` set to the Render API base URL, without `/health` or an API route appended.
+- **Backend:** `DATABASE_URL` for the hosted PostgreSQL database, a strong unique `JWT_SECRET`, and `FRONTEND_URL` set to the deployed Vercel origin.
+- Apply the committed Prisma migrations to the hosted database before testing database-backed features.
+- After changing a Vite environment variable, trigger a new frontend deployment because Vite embeds these values into the production build.
+
 ## Project layout
 
 ```text
